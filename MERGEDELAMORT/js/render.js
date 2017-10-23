@@ -22,12 +22,16 @@ var canvas, context, imageData, imageDst;
 var renderer_video, scene_video, camera_video;
 
 var Menu = function() {
-    this.threshold = false;
+    this.threshold = true;
     this.color = [255, 0, 0];
     this.tolerance = 0;
 };
 
 var menu, stats;
+
+var x3D = 0;
+var y3D = 0;
+var z3D = 0;
 
 function init() {
 
@@ -185,22 +189,22 @@ function init() {
 
 	case 38: // up
 	case 90: // z
-            moveForward = true;
-            break;
+	    moveForward = true;
+	    break;
 
 	case 37: // left
 	case 81: // q
-            moveLeft = true; break;
+	    moveLeft = true; break;
 
 	case 40: // down
 	case 83: // s
-            moveBackward = true;
-            break;
+	    moveBackward = true;
+	    break;
 
 	case 39: // right
 	case 68: // d
-            moveRight = true;
-            break;
+	    moveRight = true;
+	    break;
 
 	}
 
@@ -212,23 +216,23 @@ function init() {
 
 	case 38: // up
 	case 90: // z
-            moveForward = false;
-            break;
+	    moveForward = false;
+	    break;
 
 	case 37: // left
 	case 81: // q
-            moveLeft = false;
-            break;
+	    moveLeft = false;
+	    break;
 
 	case 40: // down
 	case 83: // s
-            moveBackward = false;
-            break;
+	    moveBackward = false;
+	    break;
 
 	case 39: // right
 	case 68: // d
-            moveRight = false;
-            break;
+	    moveRight = false;
+	    break;
 
 	}
 
@@ -573,23 +577,31 @@ function render() {
 	if ( moveLeft ) velocity.x -= 1500.0 * delta;
 	if ( moveRight ) velocity.x += 1500.0 * delta;
 
-	controls.getObject().translateX( velocity.x * delta );
-	controls.getObject().translateZ( velocity.z * delta );
+    controls.getObject().translateX( velocity.x * delta);
+    controls.getObject().translateX(-x3D);
+    controls.getObject().translateY(-y3D);
+    controls.getObject().translateZ(z3D);
+    controls.getObject().translateZ( velocity.z * delta);
     //}
-
-     renderer.clear();
-     renderer.render( scene, camera );
-
+    
+    renderer.clear();
+    renderer.render( scene, camera );
+    
     // anaglyphRenderer.clear();
     //dofRenderer.render(scene, camera);
     // anaglyphRenderer.render(scene, camera);
 
     //if(pointerLocked) {
-	//renderer.clearDepth();
-	//renderer.render( sceneOrtho, cameraOrtho );
+    //renderer.clearDepth();
+    //renderer.render( sceneOrtho, cameraOrtho );
     //}
+    
     renderer_video.clear();
     renderer_video.render(scene_video, camera_video);
+    
+    controls.getObject().translateX(x3D);
+    controls.getObject().translateY(y3D);
+    controls.getObject().translateZ(-z3D);
     stats.update();
 
 }

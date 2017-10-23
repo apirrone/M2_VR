@@ -199,6 +199,12 @@ function init() {
 
     window.addEventListener( 'mousedown', pick, false );
 
+
+
+
+
+
+    
 }
 
 function applyFaceColor( geom, color ) {
