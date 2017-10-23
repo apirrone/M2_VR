@@ -69,7 +69,7 @@ function thresholdRGBImage(imgSrc, imgDst, threshold, tolerance){
     hsvThreshold[1] = s;
     hsvThreshold[2] = v;
 
-    console.log("hsvThreshold[0] : "+hsvThreshold[0]);
+    // console.log("hsvThreshold[0] : "+hsvThreshold[0]);
     var dstBin = new CV.Image(imgDst.width, imgDst.height);
     
     index = 0;
@@ -115,6 +115,31 @@ function createTexture() {
     return object;
 }
 
+function undistortPoint([u, v]){
+    camera_matrix = math.matrix([[5.0721723504492570e+02, 0., 3.1950000000000000e+02],
+				 [0., 5.0721723504492570e+02, 2.3950000000000000e+02],
+				 [0., 0., 1.]]);
+
+    distortion_coefficients = [-8.7835307711856409e-02, -1.2925926432930088e-01, 0., 0., 1.3808115810158292e-01];
+
+    //http://docs.opencv.org/modules/imgproc/doc/geometric_transformations.html#initundistortrectifymap
+    
+    fx = 5.0721723504492570e+02;
+    fy = 5.0721723504492570e+02;
+    cx = 3.1950000000000000e+02;
+    cy = 2.3950000000000000e+02;
+
+    x = (u - cx)/fx;
+    y = (v - cy)/fy;
+
+    //skip the part with R as it is an identity matrix, and X/W -> x/1 -> x
+
+    // x2 = x*(1+
+
+    
+    
+}
+
 function animate() {
 
     requestAnimationFrame( animate );
@@ -137,8 +162,8 @@ function animate() {
 	    var biggestContourCenterX = 0;
 	    var biggestContourCenterY = 0;
 	    var biggestContourRadius;
-	    console.log("size contours : "+contours.length);
-	    console.log("bin width : "+bin.width);
+	    // console.log("size contours : "+contours.length);
+	    // console.log("bin width : "+bin.width);
 	    for(var i = 0 ; i < contours.length ; i++){
 		
 		minX = 10000;
@@ -174,7 +199,7 @@ function animate() {
 		}
 	    }
 
-	    console.log(biggestContourCenterX+" "+biggestContourCenterY);
+	    // console.log(biggestContourCenterX+" "+biggestContourCenterY);
 
 	    var img = new Image();
 	    img.src = 'batst_tear.png';
@@ -183,28 +208,18 @@ function animate() {
 	    context.lineWidth = 10;
 	    context.strokeStyle = '#ff0000';
 	    context.arc(biggestContourCenterX, biggestContourCenterY,biggestContourRadius,0,2*Math.PI);
-	    // context.drawImage(img, biggestContourCenterX-biggestContourRadius*4/2-30, biggestContourCenterY-biggestContourRadius*4/2+60, biggestContourRadius*4, biggestContourRadius*4);
+
+	    f = 5.0721723504492570e+02;
+	    
+	    x3D = biggestContourCenterX*displayParameters.pixelPitch();
+	    y3D = biggestContourCenterY*displayParameters.pixelPitch();
+	    z3D = ((76*f)/biggestContourRadius*displayParameters.pixelPitch())*2;
+	    
+	    console.log("x : "+x3D+", y : "+y3D+", z3D : "+z3D);
+	    
+	    
+	    context.drawImage(img, biggestContourCenterX-biggestContourRadius*2/2, biggestContourCenterY-biggestContourRadius*2/2, biggestContourRadius*2, biggestContourRadius*2);
 	    context.stroke();
-	    
-
-	    
-	    // var maxPerimeter = 0;
-	    // var biggestContour = contours[0];
-	    // for(var i = 0 ; i < contours.length ; i++){
-	    // 	p = CV.perimeter(contours[i]);
-	    // 	if(p > maxPerimeter){
-	    // 	    maxPerimeter = p;
-	    // 	    biggestContour = contours[i];
-	    // 	}
-	    // }
-	    
-	    // [Cx, Cy] = findCentroid(biggestContour);
-
-	    // console.log(Cx+" "+Cy);
-
-	    // context.beginPath();
-	    // context.arc(Cx, Cy,30,0,2*Math.PI);
-	    // context.stroke();
 	    
 	    
 	}

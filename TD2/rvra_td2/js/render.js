@@ -55,7 +55,7 @@ function init() {
     
     var mat_sadbatst = new THREE.MeshBasicMaterial({map:tex_sadbatst});
     
-    var cube_tnt = new THREE.Mesh( geometry, [mat_sadbatst, mat_sadbatst, mat_tnt2, mat_tnt2, mat_sadbatst, mat_sadbatst] );
+    var cube_tnt = new THREE.Mesh( geometry, [mat_tnt1, mat_tnt1, mat_tnt2, mat_tnt2, mat_tnt1, mat_tnt1] );
 
     cube_tnt.position.y = 100;
     cube_tnt.position.z = - displayParameters.distanceScreenViewer;
