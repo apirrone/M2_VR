@@ -99,7 +99,7 @@ console.log("--------------");
 
     // Left eye
     renderer.clearTarget( this.renderTargetLeft, true, true, false);
-    renderer.setViewport(0,0,displayParameters.screenSize().x/2, displayParameters.screenSize().y);
+    renderer.setViewport(0,0,window.innerWidth/2, window.innerHeight);
     renderer.render( scene, this.cameraLeft, this.renderTargetLeft);
 
     uniforms.colorMap.value = this.renderTargetLeft.texture;
@@ -108,7 +108,7 @@ console.log("--------------");
 
     // Right eye
     renderer.clearTarget( this.renderTargetRight, true, true, false);
-    renderer.setViewport(displayParameters.screenSize().x/2,0,displayParameters.screenSize().x/2, displayParameters.screenSize().y);
+    renderer.setViewport(window.innerWidth/2,0,window.innerWidth/2, window.innerHeight);
     renderer.render( scene, this.cameraRight, this.renderTargetRight);
 
     uniforms.colorMap.value = this.renderTargetRight.texture;
