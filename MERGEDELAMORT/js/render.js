@@ -22,9 +22,12 @@ var canvas, context, imageData, imageDst;
 var renderer_video, scene_video, camera_video;
 
 var Menu = function() {
-    this.threshold = true;
+    this.threshold = false;
+    this.controls = false;
+    this.anaglyph = false;
+    this.depthOfField = false;
     this.color = [255, 0, 0];
-    this.tolerance = 0;
+    this.tolerance = 10;
 };
 
 var menu, stats;
@@ -57,6 +60,9 @@ function init() {
     menu = new Menu();
     var gui = new dat.GUI();
     gui.add(menu, 'threshold');
+    gui.add(menu, 'controls');
+    gui.add(menu, 'anaglyph');
+    gui.add(menu, 'depthOfField');
     gui.addColor(menu, "color").listen();
     gui.add(menu, "tolerance", 0., 100.);
 
@@ -79,7 +85,6 @@ function init() {
 
     var fov = THREE.Math.radToDeg(Math.atan( displayParameters.screenSize().y/ displayParameters.distanceScreenViewer));
     camera = new THREE.PerspectiveCamera( fov, window.innerWidth / window.innerHeight, 1, 100000 );
-    // camera.position.y = 150;
 
     cameraOrtho = new THREE.OrthographicCamera( - window.innerWidth / 2, window.innerWidth / 2, window.innerHeight / 2, - window.innerHeight / 2, 1, 10 );
     cameraOrtho.position.z = 10;
@@ -282,13 +287,6 @@ function thresholdRGBImage(imgSrc, imgDst, threshold, tolerance){
     dstData = imgDst.data;
     hsvSrcData = srcData;
 
-    // for(i = 0 ; i < srcData.length ; i+=4){
-    // 	[h, s, v] = rgb2hsv(srcData[i], srcData[i+1], srcData[i+2]);
-    // 	hsvSrcData[i] = h/360;
-    // 	hsvSrcData[i+1] = s;
-    // 	hsvSrcData[i+2] = v;
-    // }
-
     hsvThreshold = [0, 0, 0];
     [h, s, v] = rgb2hsv(threshold[0], threshold[1], threshold[2]);
 
@@ -310,6 +308,8 @@ function thresholdRGBImage(imgSrc, imgDst, threshold, tolerance){
     	dstData[i] = dstData[i+1] = dstData[i+2] = value;
     	dstBin.data[index++] = value;
     }
+
+    //For rgb version
     // for(i = 0 ; i < srcData.length ; i+=4){
     // 	dstData[i] = dstData[i+1] = dstData[i+2] = (Math.abs(srcData[i] - threshold[0]) < tolerance &&
     // 						    Math.abs(srcData[i+1] - threshold[1]) < tolerance &&
@@ -339,6 +339,8 @@ function createTexture() {
     return object;
 }
 
+
+//Pas encore utilisé (pas fini)
 function undistortPoint([u, v]){
     camera_matrix = math.matrix([[5.0721723504492570e+02, 0., 3.1950000000000000e+02],
 				 [0., 5.0721723504492570e+02, 2.3950000000000000e+02],
@@ -367,7 +369,7 @@ function undistortPoint([u, v]){
 function animate() {
 
     requestAnimationFrame( animate );
-if (video.readyState === video.HAVE_ENOUGH_DATA){
+    if (video.readyState === video.HAVE_ENOUGH_DATA){
 	context.drawImage(video, 0, 0, canvas.width, canvas.height);
 	imageData = context.getImageData(0, 0, canvas.width, canvas.height);
 
@@ -379,71 +381,83 @@ if (video.readyState === video.HAVE_ENOUGH_DATA){
 	    // CV.grayscale(imageData, imageDst);
 
 	    contours = CV.findContours(bin, tmp);
-
-	    var biggestArea = 0;
-	    var biggestContour;
-	    var biggestContourCenterX = 0;
-	    var biggestContourCenterY = 0;
-	    var biggestContourRadius;
-	    // console.log("size contours : "+contours.length);
-	    // console.log("bin width : "+bin.width);
-	    for(var i = 0 ; i < contours.length ; i++){
-
-		minX = 10000;
-		maxX = 0;
-		minY = 100000;
-		maxY = 0;
-		c = contours[i];
-
-		for(var j = 0 ; j < c.length ; j++){
-		    currentX = c[j].x;
-		    currentY = c[j].y;
-		    if(currentX < minX)
-			minX = currentX;
-
-		    if(currentX > maxX)
-			maxX = currentX;
-
-		    if(currentY < minY)
-			minY = currentY;
-
-		    if(currentY > maxY)
-			maxY = currentY;
-		}
-
-		areaC = (maxX-minX)*(maxY-minY);
-
-		if(areaC > biggestArea){
-		    biggestArea = areaC;
-		    biggestContour = c;
-		    biggestContourCenterX = (maxX-minX)/2+minX;
-		    biggestContourCenterY = (maxY-minY)/2+minY;
-		    biggestContourRadius = Math.sqrt((maxX-minX)*(maxX-minX) + (maxY-minY)*(maxY-minY))/2;
-		}
+	    if(contours.length == 0){
+		x3D = 0.;
+		y3D = 0.;
+		z3D = 0.;
 	    }
+	    else{
 
-	    // console.log(biggestContourCenterX+" "+biggestContourCenterY);
+		var biggestArea = 0;
+		var biggestContour;
+		var biggestContourCenterX = 0;
+		var biggestContourCenterY = 0;
+		var biggestContourRadius;
+		
+		for(var i = 0 ; i < contours.length ; i++){
 
-	    var img = new Image();
-	    img.src = 'batst_tear.png';
+		    minX = 10000;
+		    maxX = 0;
+		    minY = 100000;
+		    maxY = 0;
+		    c = contours[i];
 
-	    context.beginPath();
-	    context.lineWidth = 10;
-	    context.strokeStyle = '#ff0000';
-	    context.arc(biggestContourCenterX, biggestContourCenterY,biggestContourRadius,0,2*Math.PI);
+		    for(var j = 0 ; j < c.length ; j++){
+			currentX = c[j].x;
+			currentY = c[j].y;
+			if(currentX < minX)
+			    minX = currentX;
 
-	    f = 5.0721723504492570e+02;
+			if(currentX > maxX)
+			    maxX = currentX;
 
-	    x3D = biggestContourCenterX*displayParameters.pixelPitch();
-	    y3D = biggestContourCenterY*displayParameters.pixelPitch();
-	    z3D = ((76*f)/biggestContourRadius*displayParameters.pixelPitch())*2;
+			if(currentY < minY)
+			    minY = currentY;
 
-	    console.log("x : "+x3D+", y : "+y3D+", z3D : "+z3D);
+			if(currentY > maxY)
+			    maxY = currentY;
+		    }
 
+		    areaC = (maxX-minX)*(maxY-minY);
 
-	    context.drawImage(img, biggestContourCenterX-biggestContourRadius*2/2, biggestContourCenterY-biggestContourRadius*2/2, biggestContourRadius*2, biggestContourRadius*2);
-	    context.stroke();
+		    if(areaC > biggestArea){
+			biggestArea = areaC;
+			biggestContour = c;
+			biggestContourCenterX = (maxX-minX)/2+minX;
+			biggestContourCenterY = (maxY-minY)/2+minY;
+			biggestContourRadius = Math.sqrt((maxX-minX)*(maxX-minX) + (maxY-minY)*(maxY-minY))/2;
+		    }
+		}
 
+		var img = new Image();
+		var img2 = new Image();
+		img.src = 'batst_tear.png';
+		img2.src = 'surprise.png';
+
+		context.beginPath();
+		context.lineWidth = 10;
+		context.strokeStyle = '#ff0000';
+
+		f = 5.0721723504492570e+02;
+
+		postItWidth = 90;
+		if(biggestContourRadius>5){//Pour eviter d'avoir des valeurs bizarres quand le postit sort de l'écran -> contours du potentiel bruit
+		    x3D = biggestContourCenterX*displayParameters.pixelPitch();
+		    y3D = biggestContourCenterY*displayParameters.pixelPitch();
+		    z3D = ((postItWidth*f)/biggestContourRadius*displayParameters.pixelPitch())*2;
+		}
+		else{
+		    x3D = 0.;
+		    y3D = 0.;
+		    z3D = 0.;		    
+		} 
+
+		//Misc
+		// context.drawImage(img2, biggestContourCenterX-biggestContourRadius*2/2-40, biggestContourCenterY-biggestContourRadius*2/2+20, biggestContourRadius*3, biggestContourRadius*3);
+		// context.drawImage(img, biggestContourCenterX-biggestContourRadius*2/2, biggestContourCenterY-biggestContourRadius*2/2, biggestContourRadius*2, biggestContourRadius*2);
+		context.stroke();
+
+	    }
 
 	}
 	else
@@ -567,40 +581,53 @@ function render() {
     var delta = clock.getDelta();
     //controls.enabled = false;
     //if(pointerLocked){
-	controls.enabled = true;
-	velocity.x -= velocity.x * 10.0 * delta;
-	velocity.z -= velocity.z * 10.0 * delta;
+    
+    controls.enabled = menu.controls;
+    velocity.x -= velocity.x * 10.0 * delta;
+    velocity.z -= velocity.z * 10.0 * delta;
 
-	if ( moveForward ) velocity.z -= 1500.0 * delta;
-	if ( moveBackward ) velocity.z += 1500.0 * delta;
+    if ( moveForward ) velocity.z -= 1500.0 * delta;
+    if ( moveBackward ) velocity.z += 1500.0 * delta;
 
-	if ( moveLeft ) velocity.x -= 1500.0 * delta;
-	if ( moveRight ) velocity.x += 1500.0 * delta;
+    if ( moveLeft ) velocity.x -= 1500.0 * delta;
+    if ( moveRight ) velocity.x += 1500.0 * delta;
 
     controls.getObject().translateX( velocity.x * delta);
-    controls.getObject().translateX(-x3D);
-    controls.getObject().translateY(-y3D);
-    controls.getObject().translateZ(z3D);
     controls.getObject().translateZ( velocity.z * delta);
+    controls.getObject().translateX(-3*x3D);
+    controls.getObject().translateY(-3*y3D);
+    controls.getObject().translateZ(z3D);
     //}
+
+    pe = new THREE.Vector3(-x3D, -y3D, z3D);
     
-    renderer.clear();
-    renderer.render( scene, camera );
     
-    // anaglyphRenderer.clear();
-    //dofRenderer.render(scene, camera);
-    // anaglyphRenderer.render(scene, camera);
+    if(!menu.anaglyph && !menu.depthOfField){
+	renderer.clear();
+	renderer.render( scene, camera );
+    }
+
+    if(menu.anaglyph){
+	// anaglyphRenderer.clear();
+	anaglyphRenderer.render(scene, camera, pe);
+    }
+
+    if(menu.depthOfField){
+	dofRenderer.render(scene, camera);	
+    }
+
+
 
     //if(pointerLocked) {
     //renderer.clearDepth();
     //renderer.render( sceneOrtho, cameraOrtho );
     //}
-    
+
     renderer_video.clear();
     renderer_video.render(scene_video, camera_video);
     
-    controls.getObject().translateX(x3D);
-    controls.getObject().translateY(y3D);
+    controls.getObject().translateX(3*x3D);
+    controls.getObject().translateY(3*y3D);
     controls.getObject().translateZ(-z3D);
     stats.update();
 

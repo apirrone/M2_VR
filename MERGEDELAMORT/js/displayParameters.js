@@ -30,6 +30,14 @@ var displayParameters = {
 	var h = Math.sqrt(Math.pow(this.screenDiagonal, 2)/(Math.pow(this.aspectRatio, 2)+1));
 	var w = this.aspectRatio*h;	
 	return new THREE.Vector2(w,h);
+    },
+
+    height: function(){
+	return Math.sqrt(Math.pow(this.screenDiagonal, 2)/(Math.pow(this.aspectRatio, 2)+1));
+    },
+    
+    width: function(){
+	return this.aspectRatio*this.height();
     }
     
 };
